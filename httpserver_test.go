@@ -20,6 +20,14 @@ func serveHTTP(t *testing.T) *httptest.Server {
 		case "/?code=EFGH5678&client_id=1234&client_secret=5678&grant_type=authorization_code":
 			w.WriteHeader(200)
 			w.Write(successTokenJSON())
+		case "/structures.json?auth=" + Token:
+			if strings.Contains(string(body), "away") {
+				w.WriteHeader(200)
+				w.Write([]byte(`{"away":"away"}`))
+				return
+			}
+			w.WriteHeader(200)
+			w.Write(structuresJSON())
 		case "/devices.json?auth=" + Token:
 			if req.Header.Get("Accept") == "text/event-stream" {
 				f, _ := w.(http.Flusher)

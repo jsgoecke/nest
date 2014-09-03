@@ -25,6 +25,12 @@ const (
 	HeatCool
 	// Off sets HvacMode to "off"
 	Off
+	// Home sets Away mode to "home"
+	Home
+	// Away sets Away mode to "away"
+	Away
+	// AutoAway sets Away mode to "auto-away"
+	AutoAway
 )
 
 /*
