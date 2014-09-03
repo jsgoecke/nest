@@ -17,6 +17,8 @@ A Go library for the [Nest](http://developer.nest.com) API for Nest devices. Thi
 
 ## Usage
 
+### Thermostats
+
 ```go
 package main
 
@@ -32,6 +34,7 @@ const (
 	State             = "STATE"
 	ClientSecret      = "<client-secret>"
 	AuthorizationCode = "<authorization-code> - https://developer.nest.com/documentation/how-to-auth"
+	Token             = "<token>"
 )
 
 func main() {
@@ -48,7 +51,7 @@ func main() {
 		})
 	}()
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 7; i++ {
 		devices := <-devicesChan
 		thermostat := devices.Thermostats["1cf6CGENM20W3UsKiJTT4Cqpa4SSjzbd"]
 		switch i {
@@ -85,6 +88,22 @@ func main() {
 				os.Exit(2)
 			}
 		case 4:
+			logEvent(devices, i)
+			fmt.Println("Setting FanTimeActive to true")
+			err := thermostat.SetFanTimerActive(true)
+			if err != nil {
+				fmt.Printf("Error: %s - %d\n", err.Description, i)
+				os.Exit(2)
+			}
+		case 5:
+			logEvent(devices, i)
+			fmt.Println("Setting FanTimeActive to false")
+			err := thermostat.SetFanTimerActive(false)
+			if err != nil {
+				fmt.Printf("Error: %s - %d\n", err.Description, i)
+				os.Exit(2)
+			}
+		case 6:
 			logEvent(devices, i)
 			break
 		}
