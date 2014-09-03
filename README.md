@@ -1,5 +1,5 @@
 #nest
-[![wercker status](https://app.wercker.com/status/caae45a6a0f785001032fac0c6775f3c/m "wercker status")](https://app.wercker.com/project/bykey/caae45a6a0f785001032fac0c6775f3c)
+[![wercker status](https://app.wercker.com/status/a37e2a527c0d8174a905afc388e46157/m "wercker status")](https://app.wercker.com/project/bykey/a37e2a527c0d8174a905afc388e46157)
 
 A Go library for the [Nest](http://developer.nest.com) API for Nest devices. This is early work and only supports querying the devices object as well as the REST Streaming API for devices.
 
