@@ -12,6 +12,7 @@ const (
 	State             = "STATE"
 	ClientSecret      = "<client-secret>"
 	AuthorizationCode = "<authorization-code> - https://developer.nest.com/documentation/how-to-auth"
+	Token             = "<token>"
 )
 
 func main() {
