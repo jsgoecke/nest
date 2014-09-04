@@ -4,6 +4,7 @@ import (
 	"../."
 	"encoding/json"
 	"fmt"
+	"os"
 )
 
 const (
@@ -17,22 +18,34 @@ const (
 func main() {
 	client := nest.New(ClientID, State, ClientSecret, AuthorizationCode)
 	client.Token = Token
-	structures, err := client.Structures()
-	if err != nil {
-		fmt.Println(err)
-	}
-	logEvent(structures, 1)
-	for _, structure := range structures {
-		err := structure.SetAway(nest.Away)
-		if err != nil {
-			fmt.Println(err)
+	structuresChan := make(chan map[string]*nest.Structure)
+	go func() {
+		client.StructuresStream(func(structures map[string]*nest.Structure, err error) {
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+			structuresChan <- structures
+		})
+	}()
+
+	for i := 0; i < 2; i++ {
+		structures := <-structuresChan
+		fmt.Println(structures["h68snN..."])
+		switch i {
+		case 0:
+			logEvent(structures, i)
+			fmt.Println("Setting away status")
+			err := structures["h68snN..."].SetAway(nest.Home)
+			if err != nil {
+				fmt.Printf("Error: %s - %d\n", err.Description, i)
+				os.Exit(2)
+			}
+		case 1:
+			logEvent(structures, i)
+			break
 		}
 	}
-	structures, err = client.Structures()
-	if err != nil {
-		fmt.Println(err)
-	}
-	logEvent(structures, 2)
 }
 
 func logEvent(structures map[string]*nest.Structure, cnt int) {

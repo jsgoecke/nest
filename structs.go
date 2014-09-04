@@ -40,10 +40,16 @@ type Combined struct {
 	Structures map[string]*Structure `json:"structures,omitempty"`
 }
 
-// Event represents an object returned by the REST streaming API
-type Event struct {
+// DevicesEvent represents an object returned by the REST streaming API
+type DevicesEvent struct {
 	Path string   `json:"path,omitempty"`
 	Data *Devices `json:"data,omitempty"`
+}
+
+// StructuresEvent represents an object returned by the REST streaming API
+type StructuresEvent struct {
+	Path string                `json:"path,omitempty"`
+	Data map[string]*Structure `json:"data,omitempty"`
 }
 
 // Devices represents devices that include thermostats and smokecoalarms

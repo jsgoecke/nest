@@ -189,5 +189,4 @@ Provide additional functions to update the following settings:
 
 ### Structures
 
-	* Structures streaming
 	* ETA support

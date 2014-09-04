@@ -1,6 +1,7 @@
 package nest
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
@@ -14,7 +15,7 @@ https://developer.nest.com/documentation/api#structures
 	structures := client.Structures()
 */
 func (c *Client) Structures() (map[string]*Structure, *APIError) {
-	resp, err := c.getStructures()
+	resp, err := c.getStructures(NoStream)
 	if err != nil {
 		return nil, &APIError{
 			Error:       "devices_error",
@@ -42,6 +43,20 @@ func (c *Client) Structures() (map[string]*Structure, *APIError) {
 }
 
 /*
+Structures Stream emits events from the Nest structures REST streaming API
+
+	client.StructuresStream(func(event map[string]*Structure) {
+		fmt.Println(event)
+	})
+*/
+func (c *Client) StructuresStream(callback func(structures map[string]*Structure, err error)) {
+	c.setRedirectURL()
+	for {
+		c.streamStructures(callback)
+	}
+}
+
+/*
 SetAway sets the away status of a structure
 https://developer.nest.com/documentation/api#away
 
@@ -63,8 +78,39 @@ func (s *Structure) SetAway(mode int) *APIError {
 	return s.setStructure(body)
 }
 
+// streamStructures connects to the stream, following the redirect and then watches the stream
+func (c *Client) streamStructures(callback func(structures map[string]*Structure, err error)) {
+	resp, err := c.getStructures(Stream)
+	if err != nil {
+		callback(nil, err)
+		return
+	}
+	defer resp.Body.Close()
+	c.watchStructuresStream(resp, callback)
+}
+
+// watchStructuresStream grabs the data off the stream, parses them and invokes the callback
+func (c *Client) watchStructuresStream(resp *http.Response, callback func(structures map[string]*Structure, err error)) {
+	reader := bufio.NewReader(resp.Body)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			return
+		}
+		value := parseStreamData(line)
+		if value != "" {
+			structuresEvent := &StructuresEvent{}
+			json.Unmarshal([]byte(value), structuresEvent)
+			if structuresEvent.Data != nil {
+				c.associateClientToStructures(structuresEvent.Data)
+				callback(structuresEvent.Data, nil)
+			}
+		}
+	}
+}
+
 // getStructures does an HTTP get
-func (c *Client) getStructures() (*http.Response, error) {
+func (c *Client) getStructures(action int) (*http.Response, error) {
 	if c.RedirectURL == "" {
 		req, _ := http.NewRequest("GET", c.APIURL+"/structures.json?auth="+c.Token, nil)
 		resp, err := http.DefaultClient.Do(req)
@@ -75,6 +121,9 @@ func (c *Client) getStructures() (*http.Response, error) {
 	}
 
 	req, _ := http.NewRequest("GET", c.RedirectURL+"/structures.json?auth="+c.Token, nil)
+	if action == Stream {
+		req.Header.Set("Accept", "text/event-stream")
+	}
 	resp, err := http.DefaultClient.Do(req)
 	return resp, err
 }

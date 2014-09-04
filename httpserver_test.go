@@ -21,13 +21,24 @@ func serveHTTP(t *testing.T) *httptest.Server {
 			w.WriteHeader(200)
 			w.Write(successTokenJSON())
 		case "/structures.json?auth=" + Token:
-			if strings.Contains(string(body), "away") {
+			if req.Header.Get("Accept") == "text/event-stream" {
+				f, _ := w.(http.Flusher)
+				w.Header().Set("Content-Type", "text/event-stream")
+				w.Header().Set("Cache-Control", "no-cache")
+				w.Header().Set("Connection", "keep-alive")
+				fmt.Fprintf(w, "data: %s\n\n", structuresEventJSON())
+				f.Flush()
+				fmt.Fprintf(w, "data: %s\n\n", structuresEventJSON())
+				f.Flush()
+			} else {
+				if strings.Contains(string(body), "away") {
+					w.WriteHeader(200)
+					w.Write([]byte(`{"away":"away"}`))
+					return
+				}
 				w.WriteHeader(200)
-				w.Write([]byte(`{"away":"away"}`))
-				return
+				w.Write(structuresJSON())
 			}
-			w.WriteHeader(200)
-			w.Write(structuresJSON())
 		case "/devices.json?auth=" + Token:
 			if req.Header.Get("Accept") == "text/event-stream" {
 				f, _ := w.(http.Flusher)

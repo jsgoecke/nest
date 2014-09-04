@@ -42,11 +42,11 @@ func (c *Client) watchDevicesStream(resp *http.Response, callback func(devices *
 		}
 		value := parseStreamData(line)
 		if value != "" {
-			event := &Event{}
-			json.Unmarshal([]byte(value), event)
-			if event.Data != nil {
-				c.associateClientToDevices(event.Data)
-				callback(event.Data, nil)
+			devicesEvent := &DevicesEvent{}
+			json.Unmarshal([]byte(value), devicesEvent)
+			if devicesEvent.Data != nil {
+				c.associateClientToDevices(devicesEvent.Data)
+				callback(devicesEvent.Data, nil)
 			}
 		}
 	}
