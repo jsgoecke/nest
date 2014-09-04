@@ -17,23 +17,23 @@ DevicesStream emits events from the Nest devices REST streaming API
 func (c *Client) DevicesStream(callback func(devices *Devices, err error)) {
 	c.setRedirectURL()
 	for {
-		c.stream(callback)
+		c.streamDevices(callback)
 	}
 }
 
-// stream connects to the stream, following the redirect and then watches the stream
-func (c *Client) stream(callback func(devices *Devices, err error)) {
+// streamDevices connects to the stream, following the redirect and then watches the stream
+func (c *Client) streamDevices(callback func(devices *Devices, err error)) {
 	resp, err := c.getDevices(Stream)
 	if err != nil {
 		callback(nil, err)
 		return
 	}
 	defer resp.Body.Close()
-	c.watchStream(resp, callback)
+	c.watchDevicesStream(resp, callback)
 }
 
-// watchStream grabs the data off the stream, parses them and invokes the callback
-func (c *Client) watchStream(resp *http.Response, callback func(devices *Devices, err error)) {
+// watchDevicesStream grabs the data off the stream, parses them and invokes the callback
+func (c *Client) watchDevicesStream(resp *http.Response, callback func(devices *Devices, err error)) {
 	reader := bufio.NewReader(resp.Body)
 	for {
 		line, err := reader.ReadString('\n')
