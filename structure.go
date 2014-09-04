@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 /*
@@ -76,6 +77,63 @@ func (s *Structure) SetAway(mode int) *APIError {
 	}
 	body, _ := json.Marshal(requestMode)
 	return s.setStructure(body)
+}
+
+/*
+SetETA sets the ETA for the Nest API
+https://developer.nest.com/documentation/eta-reference
+
+*/
+func (s *Structure) SetETA(tripID string, begin time.Time, end time.Time) *APIError {
+	apiErr := checkTimes(begin, end)
+	if apiErr != nil {
+		return apiErr
+	}
+	eta := &ETA{
+		TripID: tripID,
+		EstimatedArrivalWindowBegin: begin,
+		EstimatedArrivalWindowEnd:   end,
+	}
+	data, _ := json.Marshal(eta)
+	req, _ := http.NewRequest("PUT", s.Client.RedirectURL+"/structures/"+s.StructureID+"/eta.json?auth="+s.Client.Token, bytes.NewBuffer(data))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		apiError := &APIError{
+			Error:       "http_error",
+			Description: err.Error(),
+		}
+		return apiError
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != 200 {
+		apiError := &APIError{}
+		json.Unmarshal(body, apiError)
+		apiError = generateAPIError(apiError.Error)
+		apiError.Status = resp.Status
+		apiError.StatusCode = resp.StatusCode
+		return apiError
+	}
+	return nil
+}
+
+// checkTimes ensure the times provided are set properly for the Nest API
+func checkTimes(begin time.Time, end time.Time) *APIError {
+	if begin.Before(time.Now()) {
+		apiError := &APIError{
+			Error:       "eta_error",
+			Description: "The begin time must be greater than the time now",
+		}
+		return apiError
+	}
+	if end.Before(begin) {
+		apiError := &APIError{
+			Error:       "eta_error",
+			Description: "The end time must be greater than the begin time",
+		}
+		return apiError
+	}
+	return nil
 }
 
 // streamStructures connects to the stream, following the redirect and then watches the stream

@@ -128,6 +128,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 const (
@@ -152,19 +153,27 @@ func main() {
 		})
 	}()
 
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 3; i++ {
 		structures := <-structuresChan
-		fmt.Println(structures["h68snN..."])
 		switch i {
 		case 0:
 			logEvent(structures, i)
 			fmt.Println("Setting away status")
-			err := structures["h68snN..."].SetAway(nest.Home)
+			err := structures["h68sn..."].SetAway(nest.Away)
 			if err != nil {
 				fmt.Printf("Error: %s - %d\n", err.Description, i)
 				os.Exit(2)
 			}
-		case 1:
+		case 2:
+			logEvent(structures, i)
+			fmt.Println("Setting ETA")
+			err := structures["h68sn..."].SetETA("foobar-trip-id", time.Now().Add(10*time.Minute), time.Now().Add(30*time.Minute))
+			if err != nil {
+				fmt.Printf("Error: %s - %d\n", err.Description, i)
+				os.Exit(2)
+			}
+			logEvent(structures, i)
+		case 3:
 			logEvent(structures, i)
 			break
 		}
@@ -192,14 +201,3 @@ MIT, see LICENSE.txt
 
 Jason Goecke [@jsgoecke](http://twitter.com/jsgoecke)
 
-## Todo
-
-Per the write permissions here:
-
-[https://developer.nest.com/documentation/api](https://developer.nest.com/documentation/api)
-
-Provide additional functions to update the following settings:
-
-### Structures
-
-	* ETA support

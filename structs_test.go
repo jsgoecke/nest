@@ -39,8 +39,8 @@ func TestCombined(t *testing.T) {
 		})
 
 		Convey("Should get an eta", func() {
-			So(combined.Structures["VqFabWH21nwVyd4RWgJgNb292wa7hG_dUwo2i2SG7j3-BOLY0BA4sw"].Eta.TripID, ShouldEqual, "myTripHome1024")
-			checkFields(combined.Structures["VqFabWH21nwVyd4RWgJgNb292wa7hG_dUwo2i2SG7j3-BOLY0BA4sw"].Eta)
+			So(combined.Structures["VqFabWH21nwVyd4RWgJgNb292wa7hG_dUwo2i2SG7j3-BOLY0BA4sw"].ETA.TripID, ShouldEqual, "myTripHome1024")
+			checkFields(combined.Structures["VqFabWH21nwVyd4RWgJgNb292wa7hG_dUwo2i2SG7j3-BOLY0BA4sw"].ETA)
 		})
 	})
 }

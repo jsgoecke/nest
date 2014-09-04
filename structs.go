@@ -142,12 +142,12 @@ type Structure struct {
 	PeakPeriodStartTime time.Time `json:"peak_period_start_time,omitempty"`
 	PeakPeriodEndTime   time.Time `json:"peak_period_end_time,omitempty"`
 	TimeZone            string    `json:"time_zone,omitempty"`
-	Eta                 *Eta      `json:"eta,omitempty"`
+	ETA                 *ETA      `json:"eta,omitempty"`
 	Client              *Client
 }
 
 // Eta represents an eta object (estimated time of a arrival for a structure)
-type Eta struct {
+type ETA struct {
 	TripID                      string    `json:"trip_id,omitempty"`
 	EstimatedArrivalWindowBegin time.Time `json:"estimated_arrival_window_begin,omitempty"`
 	EstimatedArrivalWindowEnd   time.Time `json:"estimated_arrival_window_end,omitempty"`
