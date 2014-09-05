@@ -39,7 +39,7 @@ New creates a new Nest client
 	client := New("1234", "STATE", "<secret>", "<auth-code>")
 */
 func New(clientID string, state string, clientSecret string, authorizationCode string) *Client {
-	c := &Client{
+	return &Client{
 		ID:                clientID,
 		State:             state,
 		Secret:            clientSecret,
@@ -47,7 +47,6 @@ func New(clientID string, state string, clientSecret string, authorizationCode s
 		AccessTokenURL:    AccessTokenURL,
 		APIURL:            APIURL,
 	}
-	return c
 }
 
 /*
