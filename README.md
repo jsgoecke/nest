@@ -23,7 +23,7 @@ A Go library for the [Nest](http://developer.nest.com) API for Nest devices. Thi
 package main
 
 import (
-	"../."
+	"github.com/jsgoecke/nest"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -124,7 +124,7 @@ func logEvent(devices *nest.Devices, cnt int) {
 package main
 
 import (
-	"../."
+	"github.com/jsgoecke/nest"
 	"encoding/json"
 	"fmt"
 	"os"
