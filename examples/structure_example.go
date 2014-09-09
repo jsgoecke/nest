@@ -1,9 +1,9 @@
 package main
 
 import (
-	"../."
 	"encoding/json"
 	"fmt"
+	"github.com/jsgoecke/nest"
 	"os"
 	"time"
 )
