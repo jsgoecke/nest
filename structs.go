@@ -93,6 +93,9 @@ type Thermostat struct {
 	HvacMode               string    `json:"hvac_mode,omitempty"`
 	AmbientTemperatureF    int       `json:"ambient_temperature_f,omitempty"`
 	AmbientTemperatureC    float32   `json:"ambient_temperature_c,omitempty"`
+	Humidity               int       `json:"humidity,omitempty"`
+	HvacState              string    `json:"hvac_state,omitempty"`
+	WhereID                string    `json:"where_id,omitempty"`
 	Client                 *Client
 }
 

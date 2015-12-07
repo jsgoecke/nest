@@ -107,7 +107,10 @@ func combinedJSON() []byte {
 		                "away_temperature_low_c": 17.5,
 		                "hvac_mode": "heat",
 		                "ambient_temperature_f": 72,
-		                "ambient_temperature_c": 21.5
+		                "ambient_temperature_c": 21.5,
+		                "humidity": 35,
+		                "hvac_state": "heating",
+		                "where_id": "d6reb_OZTM..."
 		            }
 		        },
 		        "smoke_co_alarms": {
