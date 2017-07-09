@@ -23,6 +23,8 @@ const (
 	Heat
 	// HeatCool sets HvacMode to "heat-cool"
 	HeatCool
+	// Eco sets the HVacMode to "eco"
+	Eco
 	// Off sets HvacMode to "off"
 	Off
 	// Home sets Away mode to "home"

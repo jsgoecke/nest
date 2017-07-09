@@ -35,10 +35,12 @@ func (t *Thermostat) SetHvacMode(mode int) *APIError {
 		requestMode["hvac_mode"] = "heat"
 	case HeatCool:
 		requestMode["hvac_mode"] = "heat-cool"
+	case Eco:
+		requestMode["hvac_mode"] = "eco"
 	case Off:
 		requestMode["hvac_mode"] = "off"
 	default:
-		return generateAPIError("Invalid HvacMode requested - must be cool, heat, heat-cool or off")
+		return generateAPIError("Invalid HvacMode requested - must be cool, heat, heat-cool, eco, or off")
 	}
 	body, _ := json.Marshal(requestMode)
 	return t.setThermostat(body)
