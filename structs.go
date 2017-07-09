@@ -14,10 +14,10 @@ type APIError struct {
 
 // Client represents a client object
 type Client struct {
-	ID                string
+	ClientID          string
 	State             string
 	AuthorizationCode string
-	Secret            string
+	ClientSecret      string
 	Token             string
 	ExpiresIn         int
 	AccessTokenURL    string

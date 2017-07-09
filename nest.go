@@ -42,9 +42,9 @@ New creates a new Nest client
 */
 func New(clientID string, state string, clientSecret string, authorizationCode string) *Client {
 	return &Client{
-		ID:                clientID,
+		ClientID:          clientID,
 		State:             state,
-		Secret:            clientSecret,
+		ClientSecret:      clientSecret,
 		AuthorizationCode: authorizationCode,
 		AccessTokenURL:    AccessTokenURL,
 		APIURL:            APIURL,
