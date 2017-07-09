@@ -155,6 +155,9 @@ func (c *Client) associateClientToDevices(devices *Devices) {
 	for _, value := range devices.SmokeCoAlarms {
 		value.Client = c
 	}
+	for _, value := range devices.Cameras {
+		value.Client = c
+	}
 }
 
 // setRedirectURL sets the URL if not already set
