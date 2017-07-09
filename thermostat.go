@@ -46,6 +46,25 @@ func (t *Thermostat) SetHvacMode(mode int) *APIError {
 	return t.setThermostat(body)
 }
 
+func (t *Thermostat) GetHvacMode() (mode int, err *APIError) {
+	switch t.HvacMode {
+	case "cool":
+		mode = Cool
+	case "heat":
+		mode = Heat
+	case "heat-cool":
+		mode = HeatCool
+	case "eco":
+		mode = Eco
+	case "off":
+		mode = Off
+	default:
+		err = generateAPIError("Invalid HvacMode found, was " + t.HvacMode)
+	}
+
+	return
+}
+
 /*
 SetTargetTempC sets the thermostat to an intended temp in celcius
 https://developer.nest.com/documentation/api#target_temperature_c
