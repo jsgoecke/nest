@@ -10,7 +10,7 @@ import (
 /*
 DevicesStream emits events from the Nest devices REST streaming API
 
-	client.DevicesStream(func(event *Devices) {
+	client.DevicesStream(func(event *Devices, err error) {
 		fmt.Println(event)
 	})
 */
