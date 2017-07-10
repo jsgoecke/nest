@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -95,7 +97,8 @@ func (s *Structure) SetETA(tripID string, begin time.Time, end time.Time) *APIEr
 		EstimatedArrivalWindowEnd:   end,
 	}
 	data, _ := json.Marshal(eta)
-	req, _ := http.NewRequest("PUT", s.Client.RedirectURL+"/structures/"+s.StructureID+"/eta.json?auth="+s.Client.Token, bytes.NewBuffer(data))
+	req, _ := http.NewRequest("PUT", s.Client.RedirectURL+"/structures/"+s.StructureID+"/eta.json", bytes.NewBuffer(data))
+	req.Header.Add("Authorization", s.Client.Token)
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		apiError := &APIError{
@@ -169,30 +172,61 @@ func (c *Client) watchStructuresStream(resp *http.Response, callback func(struct
 
 // getStructures does an HTTP get
 func (c *Client) getStructures(action int) (*http.Response, error) {
-	if c.RedirectURL == "" {
-		req, _ := http.NewRequest("GET", c.APIURL+"/structures.json?auth="+c.Token, nil)
-		resp, err := http.DefaultClient.Do(req)
-		if resp.Request.URL != nil {
-			c.RedirectURL = resp.Request.URL.Scheme + "://" + resp.Request.URL.Host
-		}
-		return resp, err
-	}
+	req, err := http.NewRequest(http.MethodGet, c.APIURL+"/structures.json", nil)
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", c.Token)
 
-	req, _ := http.NewRequest("GET", c.RedirectURL+"/structures.json?auth="+c.Token, nil)
 	if action == Stream {
 		req.Header.Set("Accept", "text/event-stream")
 	}
-	resp, err := http.DefaultClient.Do(req)
-	return resp, err
+
+	var client = &http.Client{
+		CheckRedirect: func(redirRequest *http.Request, via []*http.Request) error {
+			// Go's http.DefaultClient does not forward headers when a redirect 3xx
+			// response is recieved. Thus, the header (which in this case contains the
+			// Authorization token) needs to be passed forward to the redirect
+			// destinations.
+			redirRequest.Header = req.Header
+
+			// Go's http.DefaultClient allows 10 redirects before returning an
+			// an error. We have mimicked this default behavior.s
+			if len(via) >= 10 {
+				return errors.New("stopped after 10 redirects")
+			}
+
+			return nil
+		},
+	}
+
+	response, err := client.Do(req)
+
+	return response, err
 }
 
 // setStructure sends the request to the Nest REST API
 func (s *Structure) setStructure(body []byte) *APIError {
-	url := s.Client.RedirectURL + "/structures/" + s.StructureID + "?auth=" + s.Client.Token
-	client := &http.Client{}
-	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	var theUrl string
+
+	if s.Client.RedirectURL != "" {
+		theUrl = s.Client.RedirectURL
+	} else {
+		theUrl = s.Client.APIURL
+	}
+
+	req, err := http.NewRequest(http.MethodPut, theUrl+"/structures/"+s.StructureID, bytes.NewBuffer(body))
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", s.Client.Token)
+
+	resp, err := http.DefaultClient.Do(req)
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 307 {
+		uri, _ := url.ParseRequestURI(resp.Header.Get("Location"))
+		s.Client.RedirectURL = uri.Scheme + "://" + uri.Host
+
+		return s.setStructure(body)
+	}
+
 	if err != nil {
 		apiError := &APIError{
 			Error:       "http_error",
@@ -201,7 +235,6 @@ func (s *Structure) setStructure(body []byte) *APIError {
 		return apiError
 	}
 	body, _ = ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		structure := &Structure{}
 		json.Unmarshal(body, structure)
