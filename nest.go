@@ -51,6 +51,13 @@ func New(clientID string, state string, clientSecret string, authorizationCode s
 	}
 }
 
+func NewWithAuthorization(AccessToken string) *Client {
+	return &Client{
+		Token:  AccessToken,
+		APIURL: APIURL,
+	}
+}
+
 /*
 Authorize fetches and sets the Nest API token
 https://developer.nest.com/documentation/how-to-auth
