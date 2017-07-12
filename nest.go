@@ -36,6 +36,25 @@ const (
 	AutoAway
 )
 
+/* Configure a httpClient that will handle redirects */
+var httpClient = &http.Client{
+	CheckRedirect: func(redirRequest *http.Request, via []*http.Request) error {
+		// Go's http.DefaultClient does not forward headers when a redirect 3xx
+		// response is recieved. Thus, the header (which in this case contains the
+		// Authorization token) needs to be passed forward to the redirect
+		// destinations.
+		redirRequest.Header = via[0].Header
+
+		// Go's http.DefaultClient allows 10 redirects before returning an
+		// an error. We have mimicked this default behavior.s
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+
+		return nil
+	},
+}
+
 /*
 New creates a new Nest client
 
@@ -145,25 +164,7 @@ func (c *Client) getDevices(action int) (*http.Response, error) {
 		req.Header.Set("Accept", "text/event-stream")
 	}
 
-	var client = &http.Client{
-		CheckRedirect: func(redirRequest *http.Request, via []*http.Request) error {
-			// Go's http.DefaultClient does not forward headers when a redirect 3xx
-			// response is recieved. Thus, the header (which in this case contains the
-			// Authorization token) needs to be passed forward to the redirect
-			// destinations.
-			redirRequest.Header = req.Header
-
-			// Go's http.DefaultClient allows 10 redirects before returning an
-			// an error. We have mimicked this default behavior.s
-			if len(via) >= 10 {
-				return errors.New("stopped after 10 redirects")
-			}
-
-			return nil
-		},
-	}
-
-	response, err := client.Do(req)
+	response, err := httpClient.Do(req)
 
 	return response, err
 }
@@ -179,15 +180,4 @@ func (c *Client) associateClientToDevices(devices *Devices) {
 	for _, value := range devices.Cameras {
 		value.Client = c
 	}
-}
-
-// setRedirectURL sets the URL if not already set
-func (c *Client) setRedirectURL() (int, error) {
-	if c.RedirectURL == "" {
-		resp, err := c.getDevices(NoStream)
-		if err != nil || resp.StatusCode != 200 {
-			return resp.StatusCode, err
-		}
-	}
-	return 0, nil
 }

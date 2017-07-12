@@ -15,7 +15,6 @@ DevicesStream emits events from the Nest devices REST streaming API
 	})
 */
 func (c *Client) DevicesStream(callback func(devices *Devices, err error)) {
-	c.setRedirectURL()
 	for {
 		c.streamDevices(callback)
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 )
 
 /*
@@ -136,27 +135,11 @@ func (t *Thermostat) SetTargetTempHighLowF(high int, low int) *APIError {
 
 // setThermostat sends the request to the Nest REST API
 func (t *Thermostat) setThermostat(body []byte) *APIError {
-	var theUrl string
-
-	if t.Client.RedirectURL != "" {
-		theUrl = t.Client.RedirectURL
-	} else {
-		theUrl = t.Client.APIURL
-	}
-
-	req, err := http.NewRequest(http.MethodPut, theUrl+"/devices/thermostats/"+t.DeviceID, bytes.NewBuffer(body))
+	req, err := http.NewRequest(http.MethodPut, t.Client.APIURL+"/devices/thermostats/"+t.DeviceID, bytes.NewBuffer(body))
 	req.Header.Add("Content-Type", "\"application/json\"")
 	req.Header.Add("Authorization", t.Client.Token)
 
-	resp, err := http.DefaultClient.Do(req)
-	defer resp.Body.Close()
-
-	if resp.StatusCode == 307 {
-		uri, _ := url.ParseRequestURI(resp.Header.Get("Location"))
-		t.Client.RedirectURL = uri.Scheme + "://" + uri.Host
-
-		return t.setThermostat(body)
-	}
+	resp, err := httpClient.Do(req)
 
 	if err != nil {
 		apiError := &APIError{

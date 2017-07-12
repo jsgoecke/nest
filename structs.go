@@ -22,7 +22,6 @@ type Client struct {
 	ExpiresIn         int
 	AccessTokenURL    string
 	APIURL            string
-	RedirectURL       string
 }
 
 // Access represents a Nest access token object
