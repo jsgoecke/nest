@@ -35,13 +35,34 @@ func (t *Thermostat) SetHvacMode(mode int) *APIError {
 		requestMode["hvac_mode"] = "heat"
 	case HeatCool:
 		requestMode["hvac_mode"] = "heat-cool"
+	case Eco:
+		requestMode["hvac_mode"] = "eco"
 	case Off:
 		requestMode["hvac_mode"] = "off"
 	default:
-		return generateAPIError("Invalid HvacMode requested - must be cool, heat, heat-cool or off")
+		return generateAPIError("Invalid HvacMode requested - must be cool, heat, heat-cool, eco, or off")
 	}
 	body, _ := json.Marshal(requestMode)
 	return t.setThermostat(body)
+}
+
+func (t *Thermostat) GetHvacMode() (mode int, err *APIError) {
+	switch t.HvacMode {
+	case "cool":
+		mode = Cool
+	case "heat":
+		mode = Heat
+	case "heat-cool":
+		mode = HeatCool
+	case "eco":
+		mode = Eco
+	case "off":
+		mode = Off
+	default:
+		err = generateAPIError("Invalid HvacMode found, was " + t.HvacMode)
+	}
+
+	return
 }
 
 /*
@@ -114,11 +135,12 @@ func (t *Thermostat) SetTargetTempHighLowF(high int, low int) *APIError {
 
 // setThermostat sends the request to the Nest REST API
 func (t *Thermostat) setThermostat(body []byte) *APIError {
-	url := t.Client.RedirectURL + "/devices/thermostats/" + t.DeviceID + "?auth=" + t.Client.Token
-	client := &http.Client{}
-	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	req, err := http.NewRequest(http.MethodPut, t.Client.APIURL+"/devices/thermostats/"+t.DeviceID, bytes.NewBuffer(body))
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", t.Client.Token)
+
+	resp, err := httpClient.Do(req)
+
 	if err != nil {
 		apiError := &APIError{
 			Error:       "http_error",

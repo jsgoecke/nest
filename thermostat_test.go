@@ -13,7 +13,6 @@ func TestFanTimeActive(t *testing.T) {
 		client.Token = Token
 		client.APIURL = ts.URL
 		devices, _ := client.Devices()
-		client.RedirectURL = ts.URL
 		Convey("When setting the Fan Timer to active", func() {
 			err := devices.Thermostats["z1234"].SetFanTimerActive(true)
 			So(err, ShouldBeNil)
@@ -29,7 +28,6 @@ func TestSetHvacMode(t *testing.T) {
 		client.Token = Token
 		client.APIURL = ts.URL
 		devices, _ := client.Devices()
-		client.RedirectURL = ts.URL
 		Convey("When an invalid mode given it should trow an error", func() {
 			err := devices.Thermostats["z1234"].SetHvacMode(2000)
 			So(err.Description, ShouldEqual, "Invalid HvacMode requested - must be cool, heat, heat-cool or off")
@@ -61,7 +59,6 @@ func TestTargetTemps(t *testing.T) {
 		client.Token = Token
 		client.APIURL = ts.URL
 		devices, _ := client.Devices()
-		client.RedirectURL = ts.URL
 		Convey("When requesting to set a target high low temperature", func() {
 			Convey("When farenheit", func() {
 				err := devices.Thermostats["z1234"].SetTargetTempHighLowF(75, 65)

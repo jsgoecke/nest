@@ -14,15 +14,14 @@ type APIError struct {
 
 // Client represents a client object
 type Client struct {
-	ID                string
+	ClientID          string
 	State             string
 	AuthorizationCode string
-	Secret            string
+	ClientSecret      string
 	Token             string
 	ExpiresIn         int
 	AccessTokenURL    string
 	APIURL            string
-	RedirectURL       string
 }
 
 // Access represents a Nest access token object
@@ -56,6 +55,7 @@ type StructuresEvent struct {
 type Devices struct {
 	Thermostats   map[string]*Thermostat   `json:"thermostats,omitempty"`
 	SmokeCoAlarms map[string]*SmokeCoAlarm `json:"smoke_co_alarms,omitempty"`
+	Cameras       map[string]*Camera       `json:"cameras, omitempty"`
 }
 
 /*
@@ -128,6 +128,34 @@ type SmokeCoAlarm struct {
 	SmokeAlarmState string    `json:"smoke_alarm_state,omitempty"`
 	UIColorState    string    `json:"ui_color_state,omitempty"`
 	Client          *Client
+}
+
+/*
+Camera represents a Nest camera object
+*/
+type Camera struct {
+	Name                  string    `json:"name"`
+	SoftwareVersion       string    `json:"software_version"`
+	WhereID               string    `json:"where_id"`
+	DeviceID              string    `json:"device_id"`
+	StructureID           string    `json:"structure_id"`
+	IsOnline              bool      `json:"is_online"`
+	IsStreaming           bool      `json:"is_streaming"`
+	IsAudioInputEnabled   bool      `json:"is_audio_input_enabled"`
+	LastIsOnlineChange    time.Time `json:"last_is_online_change"`
+	IsVideoHistoryEnabled bool      `json:"is_video_history_enabled"`
+	LastEvent             struct {
+		HasSound  bool      `json:"has_sound"`
+		HasMotion bool      `json:"has_motion"`
+		HasPerson bool      `json:"has_person"`
+		StartTime time.Time `json:"start_time"`
+		EndTime   time.Time `json:"end_time"`
+	} `json:"last_event"`
+	WhereName string `json:"where_name"`
+	NameLong  string `json:"name_long"`
+	WebURL    string `json:"web_url"`
+	AppURL    string `json:"app_url"`
+	Client    *Client
 }
 
 /*

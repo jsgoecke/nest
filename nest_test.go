@@ -24,9 +24,9 @@ func TestNew(t *testing.T) {
 		client := New(ClientID, State, ClientSecret, BadAuthorizationCode)
 		client.AccessTokenURL = ts.URL
 		err := client.Authorize()
-		So(client.ID, ShouldEqual, ClientID)
+		So(client.ClientID, ShouldEqual, ClientID)
 		So(client.State, ShouldEqual, State)
-		So(client.Secret, ShouldEqual, ClientSecret)
+		So(client.ClientSecret, ShouldEqual, ClientSecret)
 		So(client.AuthorizationCode, ShouldEqual, BadAuthorizationCode)
 		Convey("Given we gave the oauth2 API a bad authorization code we should get an error", func() {
 			So(err, ShouldNotBeNil)
@@ -38,9 +38,9 @@ func TestNew(t *testing.T) {
 		client := New(ClientID, State, ClientSecret, AuthorizationCode)
 		client.AccessTokenURL = ts.URL
 		err := client.Authorize()
-		So(client.ID, ShouldEqual, ClientID)
+		So(client.ClientID, ShouldEqual, ClientID)
 		So(client.State, ShouldEqual, State)
-		So(client.Secret, ShouldEqual, ClientSecret)
+		So(client.ClientSecret, ShouldEqual, ClientSecret)
 		So(client.AuthorizationCode, ShouldEqual, AuthorizationCode)
 		Convey("Given we gave the oauth2 API a valid authorization code we get an access token back", func() {
 			So(err, ShouldBeNil)

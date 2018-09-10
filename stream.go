@@ -10,12 +10,11 @@ import (
 /*
 DevicesStream emits events from the Nest devices REST streaming API
 
-	client.DevicesStream(func(event *Devices) {
+	client.DevicesStream(func(event *Devices, err error) {
 		fmt.Println(event)
 	})
 */
 func (c *Client) DevicesStream(callback func(devices *Devices, err error)) {
-	c.setRedirectURL()
 	for {
 		c.streamDevices(callback)
 	}

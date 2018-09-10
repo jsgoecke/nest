@@ -51,7 +51,6 @@ Structures Stream emits events from the Nest structures REST streaming API
 	})
 */
 func (c *Client) StructuresStream(callback func(structures map[string]*Structure, err error)) {
-	c.setRedirectURL()
 	for {
 		c.streamStructures(callback)
 	}
@@ -95,8 +94,11 @@ func (s *Structure) SetETA(tripID string, begin time.Time, end time.Time) *APIEr
 		EstimatedArrivalWindowEnd:   end,
 	}
 	data, _ := json.Marshal(eta)
-	req, _ := http.NewRequest("PUT", s.Client.RedirectURL+"/structures/"+s.StructureID+"/eta.json?auth="+s.Client.Token, bytes.NewBuffer(data))
-	resp, err := http.DefaultClient.Do(req)
+	req, _ := http.NewRequest("PUT", s.Client.APIURL+"/structures/"+s.StructureID+"/eta.json", bytes.NewBuffer(data))
+	req.Header.Add("Authorization", s.Client.Token)
+
+	resp, err := httpClient.Do(req)
+
 	if err != nil {
 		apiError := &APIError{
 			Error:       "http_error",
@@ -169,30 +171,28 @@ func (c *Client) watchStructuresStream(resp *http.Response, callback func(struct
 
 // getStructures does an HTTP get
 func (c *Client) getStructures(action int) (*http.Response, error) {
-	if c.RedirectURL == "" {
-		req, _ := http.NewRequest("GET", c.APIURL+"/structures.json?auth="+c.Token, nil)
-		resp, err := http.DefaultClient.Do(req)
-		if resp.Request.URL != nil {
-			c.RedirectURL = resp.Request.URL.Scheme + "://" + resp.Request.URL.Host
-		}
-		return resp, err
-	}
+	req, err := http.NewRequest(http.MethodGet, c.APIURL+"/structures.json", nil)
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", c.Token)
 
-	req, _ := http.NewRequest("GET", c.RedirectURL+"/structures.json?auth="+c.Token, nil)
 	if action == Stream {
 		req.Header.Set("Accept", "text/event-stream")
 	}
-	resp, err := http.DefaultClient.Do(req)
-	return resp, err
+
+	response, err := httpClient.Do(req)
+
+	return response, err
 }
 
 // setStructure sends the request to the Nest REST API
 func (s *Structure) setStructure(body []byte) *APIError {
-	url := s.Client.RedirectURL + "/structures/" + s.StructureID + "?auth=" + s.Client.Token
-	client := &http.Client{}
-	req, _ := http.NewRequest("PUT", url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := client.Do(req)
+	req, err := http.NewRequest(http.MethodPut, s.Client.APIURL+"/structures/"+s.StructureID, bytes.NewBuffer(body))
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", s.Client.Token)
+
+	resp, err := httpClient.Do(req)
+	defer resp.Body.Close()
+
 	if err != nil {
 		apiError := &APIError{
 			Error:       "http_error",
@@ -201,7 +201,6 @@ func (s *Structure) setStructure(body []byte) *APIError {
 		return apiError
 	}
 	body, _ = ioutil.ReadAll(resp.Body)
-	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		structure := &Structure{}
 		json.Unmarshal(body, structure)

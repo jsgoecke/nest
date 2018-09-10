@@ -2,6 +2,7 @@ package nest
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 )
@@ -23,6 +24,8 @@ const (
 	Heat
 	// HeatCool sets HvacMode to "heat-cool"
 	HeatCool
+	// Eco sets the HVacMode to "eco"
+	Eco
 	// Off sets HvacMode to "off"
 	Off
 	// Home sets Away mode to "home"
@@ -33,6 +36,25 @@ const (
 	AutoAway
 )
 
+/* Configure a httpClient that will handle redirects */
+var httpClient = &http.Client{
+	CheckRedirect: func(redirRequest *http.Request, via []*http.Request) error {
+		// Go's http.DefaultClient does not forward headers when a redirect 3xx
+		// response is recieved. Thus, the header (which in this case contains the
+		// Authorization token) needs to be passed forward to the redirect
+		// destinations.
+		redirRequest.Header = via[0].Header
+
+		// Go's http.DefaultClient allows 10 redirects before returning an
+		// an error. We have mimicked this default behavior.s
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
+		}
+
+		return nil
+	},
+}
+
 /*
 New creates a new Nest client
 
@@ -40,12 +62,19 @@ New creates a new Nest client
 */
 func New(clientID string, state string, clientSecret string, authorizationCode string) *Client {
 	return &Client{
-		ID:                clientID,
+		ClientID:          clientID,
 		State:             state,
-		Secret:            clientSecret,
+		ClientSecret:      clientSecret,
 		AuthorizationCode: authorizationCode,
 		AccessTokenURL:    AccessTokenURL,
 		APIURL:            APIURL,
+	}
+}
+
+func NewWithAuthorization(AccessToken string) *Client {
+	return &Client{
+		Token:  AccessToken,
+		APIURL: APIURL,
 	}
 }
 
@@ -56,7 +85,15 @@ https://developer.nest.com/documentation/how-to-auth
 	client.Authorize()
 */
 func (c *Client) Authorize() *APIError {
-	resp, err := http.Post(c.authURL(), "application/x-www-form-urlencoded", nil)
+	req, err := http.NewRequest(http.MethodPost, c.AccessTokenURL, nil)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("client_id", c.ClientID)
+	req.Header.Add("client_secret", c.ClientSecret)
+	req.Header.Add("grant_type", "authorization_code")
+
+	var client = &http.Client{}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return &APIError{
 			Error:       "http_error",
@@ -119,30 +156,17 @@ func (c *Client) Devices() (*Devices, *APIError) {
 
 // getDevices does an HTTP get with or without a stream on devices
 func (c *Client) getDevices(action int) (*http.Response, error) {
-	if c.RedirectURL == "" {
-		req, _ := http.NewRequest("GET", c.APIURL+"/devices.json?auth="+c.Token, nil)
-		resp, err := http.DefaultClient.Do(req)
-		if resp.Request.URL != nil {
-			c.RedirectURL = resp.Request.URL.Scheme + "://" + resp.Request.URL.Host
-		}
-		return resp, err
-	}
+	req, err := http.NewRequest(http.MethodGet, c.APIURL+"/devices.json", nil)
+	req.Header.Add("Content-Type", "\"application/json\"")
+	req.Header.Add("Authorization", c.Token)
 
-	req, _ := http.NewRequest("GET", c.RedirectURL+"/devices.json?auth="+c.Token, nil)
 	if action == Stream {
 		req.Header.Set("Accept", "text/event-stream")
 	}
-	resp, err := http.DefaultClient.Do(req)
-	return resp, err
-}
 
-// authURL sets the full authorization URL for the Nest API
-func (c *Client) authURL() string {
-	location := c.AccessTokenURL + "?code=" + c.AuthorizationCode
-	location += "&client_id=" + c.ID
-	location += "&client_secret=" + c.Secret
-	location += "&grant_type=authorization_code"
-	return location
+	response, err := httpClient.Do(req)
+
+	return response, err
 }
 
 // associateClientToDevices ensures each device knows its client details
@@ -153,15 +177,7 @@ func (c *Client) associateClientToDevices(devices *Devices) {
 	for _, value := range devices.SmokeCoAlarms {
 		value.Client = c
 	}
-}
-
-// setRedirectURL sets the URL if not already set
-func (c *Client) setRedirectURL() (int, error) {
-	if c.RedirectURL == "" {
-		resp, err := c.getDevices(NoStream)
-		if err != nil || resp.StatusCode != 200 {
-			return resp.StatusCode, err
-		}
+	for _, value := range devices.Cameras {
+		value.Client = c
 	}
-	return 0, nil
 }
